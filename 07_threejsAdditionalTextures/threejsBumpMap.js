@@ -25,7 +25,6 @@ function main()
 {
     var canvas = document.getElementById("webglcanvas");
 
-    console.log(THREE.REVISION);
     // create the scene
     createScene(canvas);
 
