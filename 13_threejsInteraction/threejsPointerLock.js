@@ -1,10 +1,13 @@
+import * as THREE from '../../libs/three.js/r125/three.module.js'
+import { PointerLockControls } from '../../libs/three.js/r125/controls/PointerLockControls.js';
+
 let camera, scene, renderer, controls;
 
 let objects = [];
 
 let raycaster;
 
-let blocker,  instructions;
+let blocker, instructions;
 
 let moveForward = false;
 let moveBackward = false;
@@ -12,18 +15,18 @@ let moveLeft = false;
 let moveRight = false;
 let canJump = false;
 
-let prevTime = performance.now();
+let prevTime = Date.now();
 let velocity, direction;
 
-let floorUrl = "../images/checker_large.gif";
-let cubeUrl = "../images/wooden_crate_2.png";
+const floorUrl = "../images/checker_large.gif";
+const cubeUrl = "../images/wooden_crate_2.png";
 
 function initPointerLock()
 {
     blocker = document.getElementById( 'blocker' );
     instructions = document.getElementById( 'instructions' );
 
-    controls = new THREE.PointerLockControls( camera, document.body );
+    controls = new PointerLockControls( camera, document.body );
 
     controls.addEventListener( 'lock', function () {
         instructions.style.display = 'none';
@@ -105,15 +108,12 @@ function createScene(canvas)
 {    
     renderer = new THREE.WebGLRenderer( { canvas: canvas, antialias: true } );
 
-    renderer.setPixelRatio( window.devicePixelRatio );
-    renderer.setSize( window.innerWidth, window.innerHeight );
-
-    window.addEventListener( 'resize', onWindowResize, false );
+    renderer.setSize(canvas.width, canvas.height);
 
     velocity = new THREE.Vector3();
     direction = new THREE.Vector3();
     
-    camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1000 );
+    camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 1000 );
 
     scene = new THREE.Scene();
     scene.background = new THREE.Color( 0xffffff );
@@ -171,30 +171,18 @@ function createScene(canvas)
     initPointerLock();
 }
 
-function onWindowResize() {
-
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-
-    renderer.setSize( window.innerWidth, window.innerHeight );
-
-}
-
-function run() 
+function update() 
 {
-    requestAnimationFrame( run );
+    requestAnimationFrame( update );
 
     if ( controls.isLocked === true ) 
     {
-        console.log("posicion: ", controls.getObject().position);
-        console.log("posicion rayo: ", raycaster.ray.origin);
-
         raycaster.ray.origin.copy( controls.getObject().position );
         raycaster.ray.origin.y -= 10;
 
         let intersections = raycaster.intersectObjects( objects );
         let onObject = intersections.length > 0;
-        let time = performance.now();
+        let time = Date.now();
         let delta = ( time - prevTime ) / 1000;
 
         velocity.x -= velocity.x * 10.0 * delta;
@@ -205,8 +193,11 @@ function run()
         direction.x = Number( moveRight ) - Number( moveLeft );
 
         direction.normalize(); // this ensures consistent movements in all directions
+
         if ( moveForward || moveBackward ) velocity.z -= direction.z * 400.0 * delta;
+
         if ( moveLeft || moveRight ) velocity.x -= direction.x * 400.0 * delta;
+
         if ( onObject === true ) {
             velocity.y = Math.max( 0, velocity.y );
             canJump = true;
@@ -214,6 +205,7 @@ function run()
 
         controls.moveRight( - velocity.x * delta );
         controls.moveForward( - velocity.z * delta );
+
         controls.getObject().position.y += ( velocity.y * delta ); // new behavior
 
         if ( controls.getObject().position.y < 10 ) {
@@ -221,9 +213,39 @@ function run()
             controls.getObject().position.y = 10;
             canJump = true;
         }
+        
         prevTime = time;
     }
 
     renderer.render( scene, camera );
 
 }
+
+function main()
+{
+    const canvas = document.getElementById("webglcanvas");
+
+    createScene(canvas);
+
+    update();
+}
+
+function resize()
+{
+    const canvas = document.getElementById("webglcanvas");
+
+    canvas.width = document.body.clientWidth;
+    canvas.height = document.body.clientHeight;
+
+    camera.aspect = canvas.width / canvas.height;
+
+    camera.updateProjectionMatrix();
+    renderer.setSize(canvas.width, canvas.height);
+}
+
+window.onload = () => {
+    main();
+    resize(); 
+};
+
+window.addEventListener('resize', resize, false);
