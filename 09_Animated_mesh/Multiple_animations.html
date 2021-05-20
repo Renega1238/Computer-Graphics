@@ -1,0 +1,46 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Three.js Multiple animations</title>
+
+<link rel="stylesheet" href="../css/main.css" />
+<link rel="stylesheet" href="../css/multipleAnimations.css" />
+
+<script defer type="module" src="Multiple_animations.js"></script>
+
+<style>
+    body {
+      width: 100vw;
+      height: 100vh;
+      margin: 0;
+      border: 0;
+      overflow: hidden; 
+    }
+</style>
+
+</head>
+
+<body>
+
+<div id="container">
+    <canvas id="webglcanvas" width=800 height=600></canvas>
+	<div id="title">Three.js Multiple animations</div>
+</div>
+
+<div id="animations"> 
+	Animations
+
+	<div id="animationsGroup">
+		<input id="idleCheck" type="radio" name="animationsGroup" value="idle" checked> Idle<br>
+		<input id="backCheck" type="radio" name="animationsGroup" value="back"> Backing up<br>
+		<input id="runCheck" type="radio" name="animationsGroup" value="Run_L"> Running<br>
+		<input id="threatCheck" type="radio" name="animationsGroup" value="Threaten"> Threaten
+	</div>
+
+</div> 
+
+
+</body>
+
+
+</html>
