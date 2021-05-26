@@ -131,7 +131,9 @@ async function loadGLTF(gltfModelUrl, configuration)
 
         const result = await gltfLoader.loadAsync(gltfModelUrl);
 
-        const object = result.scene.children[0];
+        const object = result.scene;
+
+        console.log(object);
 
         setVectorValue(object.position, configuration, 'position', new THREE.Vector3(0,0,0));
         setVectorValue(object.scale, configuration, 'scale', new THREE.Vector3(1, 1, 1));
@@ -169,7 +171,7 @@ function createScene(canvas)
 
     // Add  a camera so we can view the scene
     camera = new THREE.PerspectiveCamera( 45, canvas.width / canvas.height, 1, 4000 );
-    camera.position.set(0, 15, 50);
+    camera.position.set(0, 5, 50);
     scene.add(camera);
 
     orbitControls = new OrbitControls(camera, renderer.domElement);
@@ -188,7 +190,7 @@ function createScene(canvas)
     spotLight.position.set(0, 8, 100);
     root.add(spotLight);
 
-    ambientLight = new THREE.AmbientLight ( 0xffffff, 0.3);
+    ambientLight = new THREE.AmbientLight ( 0xffffff, 1);
     root.add(ambientLight);
 
     // Create a texture map
@@ -211,13 +213,14 @@ function createScene(canvas)
 
 function loadObjects()
 {
-    loadObj(objModel, {position: new THREE.Vector3(-8, 0, 0), scale: new THREE.Vector3(3, 3, 3), rotation: new THREE.Vector3(0, 1.58, 0) });
+    // loadObj(objModel, {position: new THREE.Vector3(-8, 0, 0), scale: new THREE.Vector3(3, 3, 3), rotation: new THREE.Vector3(0, 1.58, 0) });
     
-    load3dModel(objMtlModel.obj, objMtlModel.mtl, {position: new THREE.Vector3(0, -3, 0), scale:new THREE.Vector3(0.25, 0.25, 0.25)});
+    // load3dModel(objMtlModel.obj, objMtlModel.mtl, {position: new THREE.Vector3(0, -3, 0), scale:new THREE.Vector3(0.25, 0.25, 0.25)});
     
-    loadGLTF('../../models/gltf/Soldier.glb', {position: new THREE.Vector3(10, -4, 0), scale:new THREE.Vector3(0.05, 0.05, 0.05), rotation: new THREE.Vector3(1.58, 3.1415,0)  });
+    loadGLTF('../../models/gltf/equipo1_IntroductionMapDup.glb', {position: new THREE.Vector3(0, -2, 0), scale:new THREE.Vector3(5, 5, 5), rotation: new THREE.Vector3(0,0,0)  });
+    // loadGLTF('../../models/gltf/Soldier.glb', {position: new THREE.Vector3(10, -4, 0), scale:new THREE.Vector3(0.05, 0.05, 0.05), rotation: new THREE.Vector3(1.58, 3.1415,0)  });
 
-    loadFBX('../../models/fbx/Robot/robot_idle.fbx', {position: new THREE.Vector3(0, -4, -20), scale:new THREE.Vector3(0.05, 0.05, 0.05) })
+    // loadFBX('../../models/fbx/Robot/robot_idle.fbx', {position: new THREE.Vector3(0, -4, -20), scale:new THREE.Vector3(0.05, 0.05, 0.05) })
 }
 
 function main()
