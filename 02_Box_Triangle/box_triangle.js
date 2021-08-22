@@ -1,29 +1,35 @@
-mat4 = glMatrix.mat4;
+import * as shaderUtils from '../common/shaderUtils.js'
+const mat4 = glMatrix.mat4;
 
 // ModelView Matrix: defines where the square is positioned in the 3D coordinate system relative to the camera
 // Projection Matrix: required by the shader to convert the 3D space into the 2D space of the viewport. 
 let projectionMatrix, modelViewMatrix;
 
+let shaderVertexPositionAttribute, shaderProjectionMatrixUniform, shaderModelViewMatrixUniform;
+
 // Attributes: Input variables used in the vertex shader. Since the vertex shader is called on each vertex, these will be different every time the vertex shader is invoked.
 // Uniforms: Input variables for both the vertex and fragment shaders. These are constant during a rendering cycle, such as lights position.
 // Varyings: Used for passing data from the vertex shader to the fragment shader.
-let vertexShaderSource =    
-    "    attribute vec3 vertexPos;\n" +
-    "    uniform mat4 modelViewMatrix;\n" +
-    "    uniform mat4 projectionMatrix;\n" +
-    "    void main(void) {\n" +
-    "		// Return the transformed and projected vertex value\n" +
-    "        gl_Position = projectionMatrix * modelViewMatrix * \n" +
-    "            vec4(vertexPos, 1.0);\n" +
-    "    }\n";
+const vertexShaderSource = `#version 300 es
 
-let fragmentShaderSource = 
-    "    void main(void) {\n" +
-    "    // Return the pixel color: always output white\n" +
-    "    gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);\n" +
-    "}\n";
+        in vec3 vertexPos; // Vertex from the buffer
+        uniform mat4 modelViewMatrix; // Object's position
+        uniform mat4 projectionMatrix; // Camera's position
 
-let shaderProgram, shaderVertexPositionAttribute, shaderProjectionMatrixUniform, shaderModelViewMatrixUniform;
+        void main(void) {
+    		// Return the transformed and projected vertex value
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(vertexPos, 1.0);
+        }`;
+
+const fragmentShaderSource = `#version 300 es
+
+        precision mediump float;
+        out vec4 fragColor;
+
+        void main(void) {
+        // Return the pixel color: always output white
+        fragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    }`;
 
 function main() 
 {
@@ -32,7 +38,8 @@ function main()
     let gl = initWebGL(canvas);
     initGL(gl, canvas);
     initViewport(gl, canvas);
-    initShader(gl);
+
+    const shaderProgram = shaderUtils.initShader(gl, vertexShaderSource, fragmentShaderSource);
 
     let square = createSquare(gl);
     let triangle = createTriangle(gl);
@@ -40,27 +47,26 @@ function main()
     mat4.identity(modelViewMatrix);
     
     mat4.translate(modelViewMatrix, modelViewMatrix, [-1.0, 0.0, -3.333]);
-    draw(gl, square);
+
+    bindShaderAttributes(gl, shaderProgram);
+    draw(gl, shaderProgram, square);
     
     mat4.identity(modelViewMatrix);
     
     mat4.translate(modelViewMatrix, modelViewMatrix, [1, 0.0, -3.333]);
-    draw(gl, triangle);
+
+    bindShaderAttributes(gl, shaderProgram);
+    draw(gl, shaderProgram, triangle);
 }
 
-// Initializes the context for use with WebGL
 function initWebGL(canvas) 
 {
-
     let gl = null;
     let msg = "Your browser does not support WebGL, or it is not enabled by default.";
 
     try 
     {
-        // The getContext method can take one of the following context id strings:
-        // "2d" for a 2d canvas context, "webgl" for a WebGL context, or "experimental-webgl" to get a xontext for earlier-version browsers.
-        // Use of "experimental-webgl" is recommended to get a context for all WebGL capable browsers.
-        gl = canvas.getContext("experimental-webgl");
+        gl = canvas.getContext("webgl2");
     } 
     catch (e)
     {
@@ -69,7 +75,6 @@ function initWebGL(canvas)
 
     if (!gl)
     {
-        alert(msg);
         throw new Error(msg);
     }
 
@@ -81,36 +86,6 @@ function initWebGL(canvas)
 function initViewport(gl, canvas)
 {
     gl.viewport(0, 0, canvas.width, canvas.height);
-}
-
-function initShader(gl)
-{
-    // load and compile the fragment and vertex shader
-    let fragmentShader = createShader(gl, fragmentShaderSource, "fragment");
-    let vertexShader = createShader(gl, vertexShaderSource, "vertex");
-
-    // link them together into a new program
-    shaderProgram = gl.createProgram();
-    gl.attachShader(shaderProgram, vertexShader);
-    gl.attachShader(shaderProgram, fragmentShader);
-    gl.linkProgram(shaderProgram);
-
-    // Obtain handles to each of the variables defined in the GLSL shader code so that they can be initialized
-    // gl.getAttribLocation(program, name);
-    // program  A webgl program containing the attribute variable
-    // name     A domString specifying the name of the attribute variable whose location to get
-    shaderVertexPositionAttribute = gl.getAttribLocation(shaderProgram, "vertexPos");
-    gl.enableVertexAttribArray(shaderVertexPositionAttribute);
-    
-    // gl.getUniformLocation(program, name);
-    // program  A webgl program containing the attribute variable
-    // name     A domString specifying the name of the uniform variable whose location to get
-    shaderProjectionMatrixUniform = gl.getUniformLocation(shaderProgram, "projectionMatrix");
-    shaderModelViewMatrixUniform = gl.getUniformLocation(shaderProgram, "modelViewMatrix");
-    
-    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-        alert("Could not initialise shaders");
-    }
 }
 
 function initGL(gl, canvas)
@@ -141,52 +116,29 @@ function initGL(gl, canvas)
     mat4.perspective(projectionMatrix, Math.PI / 4, canvas.width / canvas.height, 1, 10000);
 }
 
-// Helper function that uses WebGL methods to compile the vertex and fragments shaders from a source.
-function createShader(gl, str, type)
+function bindShaderAttributes(gl, shaderProgram)
 {
-    let shader;
-    if (type == "fragment") {
-        shader = gl.createShader(gl.FRAGMENT_SHADER);
-    } else if (type == "vertex") {
-        shader = gl.createShader(gl.VERTEX_SHADER);
-    } else {
-        return null;
-    }
-
-    gl.shaderSource(shader, str);
-    gl.compileShader(shader);
-
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        alert(gl.getShaderInfoLog(shader));
-        return null;
-    }
-
-    return shader;
+    // Obtain handles to each of the variables defined in the GLSL shader code so that they can be initialized
+    // gl.getAttribLocation(program, name);
+    // program  A webgl program containing the attribute variable
+    // name     A domString specifying the name of the attribute variable whose location to get
+    shaderVertexPositionAttribute = gl.getAttribLocation(shaderProgram, "vertexPos");
+    gl.enableVertexAttribArray(shaderVertexPositionAttribute);
+    
+    // gl.getUniformLocation(program, name);
+    // program  A webgl program containing the attribute variable
+    // name     A domString specifying the name of the uniform variable whose location to get
+    shaderProjectionMatrixUniform = gl.getUniformLocation(shaderProgram, "projectionMatrix");
+    shaderModelViewMatrixUniform = gl.getUniformLocation(shaderProgram, "modelViewMatrix");
 }
 
-function draw(gl, obj) 
+function draw(gl, shaderProgram, obj) 
 {
-    // set the shader to use
     gl.useProgram(shaderProgram);
-
-    // connect up the shader parameters: vertex position and projection/model matrices
-    // set the vertex buffer to be drawn
     gl.bindBuffer(gl.ARRAY_BUFFER, obj.buffer);
 
-    // Specifies the memory layout of the vertex buffer object. It must be called once for each vertex attribute.
-    // gl.vertexAttribPointer(index, size, type, normalized, stride, offset);
-    // index: A GLuint specifying the index of the vertex attribute that is to be modified.
-    // size: A GLint specifying the number of components per vertex attribute. Must be 1, 2, 3, or 4.
-    // type: A GLenum specifying the data type of each component in the array.
-    // normalized: A GLboolean specifying whether integer data values should be normalized into a certain range when being casted to a float.
-    // stride: A GLsizei specifying the offset in bytes between the beginning of consecutive vertex attributes.
-    // offset: A GLintptr specifying an offset in bytes of the first component in the vertex attribute array
     gl.vertexAttribPointer(shaderVertexPositionAttribute, obj.vertSize, gl.FLOAT, false, 0, 0);
 
-    // WebGLRenderingContext.uniformMatrix4fv(location, transpose, value); 
-    // location: A WebGLUniformLocation object containing the location of the uniform attribute to modify. The location is obtained using getAttribLocation().
-    // transpose: A GLboolean specifying whether to transpose the matrix.
-    // value: A Float32Array or sequence of GLfloat values.
     gl.uniformMatrix4fv(shaderProjectionMatrixUniform, false, projectionMatrix);
     gl.uniformMatrix4fv(shaderModelViewMatrixUniform, false, modelViewMatrix);
 
@@ -209,14 +161,11 @@ function createSquare(gl)
         .5,  -.5,  0.0,
         -.5, -.5,  0.0,
     ];
-    // void gl.bufferData(target, ArrayBufferView srcData, usage, srcOffset, length);
-    // target = gl.ARRAY_BUFFER: Buffer containing vertex attributes, such as vertex coordinates, texture coordinate data, or vertex color data.
-    // srcData = This is a new data type introduced into web browsers for use with WebGL. Float32Array is a type of ArrayBuffer, also known as a typed array. This is a JavaScript type that stores compact binary data. 
-    // usage = A GLenum specifying the usage pattern of the data store. gl.STATIC_DRAW: Contents of the buffer are likely to be used often and not change often. Contents are written to the buffer, but not read.
+
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verts), gl.STATIC_DRAW);
 
-    // The resulting object contains the vertexbuffer, the size of the vertex structure (3 floats, x, y, z), the number of vertices to be drawn, the the primitive to draw.
     let square = {buffer:vertexBuffer, vertSize:3, nVerts:4, primtype:gl.TRIANGLE_STRIP};
+
     return square;
 }
 
@@ -230,38 +179,11 @@ function createTriangle(gl)
         .5, -.5,  0.0,
         -.5, -.5,  0.0
     ];
-    // void gl.bufferData(target, ArrayBufferView srcData, usage, srcOffset, length);
-    // target = gl.ARRAY_BUFFER: Buffer containing vertex attributes, such as vertex coordinates, texture coordinate data, or vertex color data.
-    // srcData = This is a new data type introduced into web browsers for use with WebGL. Float32Array is a type of ArrayBuffer, also known as a typed array. This is a JavaScript type that stores compact binary data. 
-    // usage = A GLenum specifying the usage pattern of the data store. gl.STATIC_DRAW: Contents of the buffer are likely to be used often and not change often. Contents are written to the buffer, but not read.
+    
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verts), gl.STATIC_DRAW);
-
-    // The resulting object contains the vertexbuffer, the size of the vertex structure (3 floats, x, y, z), the number of vertices to be drawn, the the primitive to draw.
+    
     let triangle = {buffer:vertexBuffer, vertSize:3, nVerts:3, primtype:gl.TRIANGLES};
     return triangle;
 }  
 
-function createSphere(gl, radius)
-{
-    var vertexBuffer;
-    vertexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-
-    var circle_verts = [0,0,0];
-    var startCircle = 45;
-    var endCircle = 325;
-
-    for(var i = startCircle; i <= endCircle; i++)
-    {
-        //x
-        circle_verts.push(Math.cos(degrees_to_radians(i)) * radius);
-        //y
-        circle_verts.push(Math.sin(degrees_to_radians(i)) * radius);
-        //z always 0 for the points to be coplanar
-        circle_verts.push(0.0);
-    }
-    console.log(circle_verts);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(circle_verts), gl.STATIC_DRAW);
-    var sphere = {buffer:vertexBuffer, vertSize:3, nVerts:circle_verts.length/3, primtype:gl.TRIANGLE_FAN};
-    return sphere;
-}        
+main();

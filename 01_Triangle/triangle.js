@@ -1,10 +1,12 @@
-import * as shaderUtils from "./shaderUtils.js";
+import * as shaderUtils from "../common/shaderUtils.js";
 
 const mat4 = glMatrix.mat4;
 
 // ModelView Matrix: defines where the triangle is positioned in the 3D coordinate system relative to the camera
 // Projection Matrix: required by the shader to convert the 3D space into the 2D space of the viewport. 
 let projectionMatrix, modelViewMatrix;
+
+let shaderVertexPositionAttribute, shaderProjectionMatrixUniform, shaderModelViewMatrixUniform;
 
 // in: Input variables used in the vertex shader. Since the vertex shader is called on each vertex, these will be different every time the vertex shader is invoked.
 // Uniforms: Input variables for both the vertex and fragment shaders. These are constant during a rendering cycle, such as lights position.
@@ -30,8 +32,6 @@ const fragmentShaderSource = `#version 300 es
         // Return the pixel color: always output white
         fragColor = vec4(1.0, 1.0, 1.0, 1.0);
     }`;
-
-let shaderVertexPositionAttribute, shaderProjectionMatrixUniform, shaderModelViewMatrixUniform;
 
 function main() 
 {
@@ -61,20 +61,16 @@ function initWebGL(canvas)
     let gl = null;
     const msg = "Your browser does not support WebGL, or it is not enabled by default.";
 
-    try 
-    {
+    try {
         // The getContext method can take one of the following context id strings:
         // "2d" for a 2d canvas context, or "webgl2" for a WebGL context.
         gl = canvas.getContext("webgl2");
     } 
-    catch (e)
-    {
+    catch (e){
         msg = "Error creating WebGL Context!: " + e.toString();
     }
 
-    if (!gl)
-    {
-        alert(msg);
+    if (!gl){
         throw new Error(msg);
     }
 
@@ -193,3 +189,4 @@ function draw(gl, shaderProgram, obj)
 }
 
 window.onload = main;
+// main();

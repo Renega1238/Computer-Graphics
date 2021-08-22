@@ -1,6 +1,6 @@
 function createShader(gl, str, type)
 {
-    let shader;
+    let shader = null;
     
     if (type == "fragment") 
         shader = gl.createShader(gl.FRAGMENT_SHADER);
@@ -13,8 +13,7 @@ function createShader(gl, str, type)
     gl.compileShader(shader);
 
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        console.log(gl.getShaderInfoLog(shader));
-        return null;
+        throw new Error(gl.getShaderInfoLog(shader));
     }
 
     return shader;
@@ -32,7 +31,7 @@ function initShader(gl, vertexShaderSource, fragmentShaderSource)
     gl.linkProgram(shaderProgram);
     
     if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-        alert("Could not initialise shaders");
+        throw new Error("Could not initialise shaders");
     }
 
     return shaderProgram;
