@@ -1,18 +1,57 @@
-let mat4 = glMatrix.mat4;
+import * as shaderUtils from "../common/shaderUtils.js";
+
+const mat4 = glMatrix.mat4;
+
+// ModelView Matrix: defines where the triangle is positioned in the 3D coordinate system relative to the camera
+// Projection Matrix: required by the shader to convert the 3D space into the 2D space of the viewport. 
+let projectionMatrix, modelViewMatrix;
+
+let shaderVertexPositionAttribute, shaderProjectionMatrixUniform, shaderModelViewMatrixUniform;
+
+// in: Input variables used in the vertex shader. Since the vertex shader is called on each vertex, these will be different every time the vertex shader is invoked.
+// Uniforms: Input variables for both the vertex and fragment shaders. These are constant during a rendering cycle, such as lights position.
+
+// NOTE: #version 300 es must be the first line of your shader, so that webgl2 knows that the shader language is GLSL ES 3.0 instead of GLSL 1.0
+const vertexShaderSource = `#version 300 es
+
+        in vec3 vertexPos; // Vertex from the buffer
+        uniform mat4 modelViewMatrix; // Object's position
+        uniform mat4 projectionMatrix; // Camera's position
+
+        void main(void) {
+    		// Return the transformed and projected vertex value
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(vertexPos, 1.0);
+        }`;
+
+const fragmentShaderSource = `#version 300 es
+
+        precision mediump float;
+        out vec4 fragColor;
+
+        void main(void) {
+        // Return the pixel color: always output white
+        fragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    }`;
 
 function main() 
 {
-    let canvas = document.getElementById("webglcanvas");
+    const canvas = document.getElementById("webglcanvas");
+
     // Code to make the canvas full screen
     // canvas.width = window.innerWidth;
     // canvas.height = window.innerHeight;
-    let gl = initWebGL(canvas);
+    const gl = initWebGL(canvas);
     
     initViewport(gl, canvas);
     initMatrices(canvas);
-    let triangle = createTriangle(gl);
-    initShader(gl);
-    draw(gl, triangle);
+
+    const shaderProgram = shaderUtils.initShader(gl, vertexShaderSource, fragmentShaderSource);
+
+    const triangle = createTriangle(gl, shaderProgram);
+    
+    bindShaderAttributes(gl, shaderProgram);
+
+    draw(gl, shaderProgram, triangle);
 }
 
 // Initializes the context for use with WebGL
@@ -20,26 +59,18 @@ function initWebGL(canvas)
 {
 
     let gl = null;
-    let msg = "Your browser does not support WebGL, or it is not enabled by default.";
+    const msg = "Your browser does not support WebGL, or it is not enabled by default.";
 
-    try 
-    {
+    try {
         // The getContext method can take one of the following context id strings:
-        // "2d" for a 2d canvas context, "webgl" for a WebGL context, or "experimental-webgl" to get a xontext for earlier-version browsers.
-        // Use of "experimental-webgl" is recommended to get a context for all WebGL capable browsers.
-        
-        // gl = canvas.getContext("experimental-webgl"); --> El experimental intenta tomar el más reciente
-
+        // "2d" for a 2d canvas context, or "webgl2" for a WebGL context.
         gl = canvas.getContext("webgl2");
     } 
-    catch (e)
-    {
+    catch (e){
         msg = "Error creating WebGL Context!: " + e.toString();
     }
 
-    if (!gl)
-    {
-        alert(msg);
+    if (!gl){
         throw new Error(msg);
     }
 
@@ -53,10 +84,6 @@ function initViewport(gl, canvas)
     // De que tamaño vamos a dibujar
     gl.viewport(0, 0, canvas.width, canvas.height);
 }
-
-// ModelView Matrix: defines where the triangle is positioned in the 3D coordinate system relative to the camera
-// Projection Matrix: required by the shader to convert the 3D space into the 2D space of the viewport. 
-let projectionMatrix, modelViewMatrix;
 
 function initMatrices(canvas)
 {
@@ -115,65 +142,8 @@ function createTriangle(gl)
     return triangle;
 }
 
-// Helper function that uses WebGL methods to compile the vertex and fragments shaders from a source.
-function createShader(gl, str, type)
+function bindShaderAttributes(gl, shaderProgram)
 {
-    let shader;
-    if (type == "fragment") {
-        shader = gl.createShader(gl.FRAGMENT_SHADER);
-    } else if (type == "vertex") {
-        shader = gl.createShader(gl.VERTEX_SHADER);
-    } else {
-        return null;
-    }
-
-    gl.shaderSource(shader, str);
-    gl.compileShader(shader);
-
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        alert(gl.getShaderInfoLog(shader));
-        return null;
-    }
-
-    return shader;
-}
-
-// Attributes: Input variables used in the vertex shader. Since the vertex shader is called on each vertex, these will be different every time the vertex shader is invoked.
-// Uniforms: Input variables for both the vertex and fragment shaders. These are constant during a rendering cycle, such as lights position.
-// Varyings: Used for passing data from the vertex shader to the fragment shader.
-let vertexShaderSource =
-    
-    "    attribute vec3 vertexPos;\n" + // Vertice que viene del buffer
-    "    uniform mat4 modelViewMatrix;\n" + // Objecto
-    "    uniform mat4 projectionMatrix;\n" + // Camara
-
-    "    void main(void) {\n" +
-    "		// Return the transformed and projected vertex value\n" +
-    "        gl_Position = projectionMatrix * modelViewMatrix * \n" +
-    "            vec4(vertexPos, 1.0);\n" +
-
-    "    }\n";
-
-let fragmentShaderSource = 
-    "    void main(void) {\n" +
-    "    // Return the pixel color: always output white\n" +
-    "    gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);\n" +
-    "}\n";
-
-let shaderProgram, shaderVertexPositionAttribute, shaderProjectionMatrixUniform, shaderModelViewMatrixUniform;
-
-function initShader(gl)
-{
-    // load and compile the fragment and vertex shader
-    let fragmentShader = createShader(gl, fragmentShaderSource, "fragment");
-    let vertexShader = createShader(gl, vertexShaderSource, "vertex");
-
-    // link them together into a new program
-    shaderProgram = gl.createProgram();
-    gl.attachShader(shaderProgram, vertexShader);
-    gl.attachShader(shaderProgram, fragmentShader);
-    gl.linkProgram(shaderProgram);
-
     // Obtain handles to each of the variables defined in the GLSL shader code so that they can be initialized
     // gl.getAttribLocation(program, name);
     // program  A webgl program containing the attribute variable
@@ -186,13 +156,9 @@ function initShader(gl)
     // name     A domString specifying the name of the uniform variable whose location to get
     shaderProjectionMatrixUniform = gl.getUniformLocation(shaderProgram, "projectionMatrix");
     shaderModelViewMatrixUniform = gl.getUniformLocation(shaderProgram, "modelViewMatrix");
-    
-    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-        alert("Could not initialise shaders");
-    }
 }
 
-function draw(gl, obj) 
+function draw(gl, shaderProgram, obj) 
 {
     // clear the background (with black)
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -227,4 +193,7 @@ function draw(gl, obj)
 
     // draw the object
     gl.drawArrays(obj.primtype, 0, obj.nVerts);
-}   
+}
+
+window.onload = main;
+// main();
