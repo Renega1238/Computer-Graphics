@@ -27,7 +27,10 @@ function initWebGL(canvas)
         // The getContext method can take one of the following context id strings:
         // "2d" for a 2d canvas context, "webgl" for a WebGL context, or "experimental-webgl" to get a xontext for earlier-version browsers.
         // Use of "experimental-webgl" is recommended to get a context for all WebGL capable browsers.
-        gl = canvas.getContext("experimental-webgl");
+        
+        // gl = canvas.getContext("experimental-webgl"); --> El experimental intenta tomar el más reciente
+
+        gl = canvas.getContext("webgl2");
     } 
     catch (e)
     {
@@ -47,6 +50,7 @@ function initWebGL(canvas)
 // In this case, the viewport will take up the entire contents of the canvas' display area.
 function initViewport(gl, canvas)
 {
+    // De que tamaño vamos a dibujar
     gl.viewport(0, 0, canvas.width, canvas.height);
 }
 
@@ -73,7 +77,9 @@ function initMatrices(canvas)
     // aspect	number	Aspect ratio. typically viewport width/height
     // near	    number	Near bound of the frustum
     // far	    number	Far bound of the frustum
+    // Angulos en radianes, Math.Pi (180) / 4 = 45, width, height, near, far 
     mat4.perspective(projectionMatrix, Math.PI / 4, canvas.width / canvas.height, 1, 5);
+    
 }
 
 // Create the vertex data for a Triangle to be drawn.
@@ -82,11 +88,13 @@ function initMatrices(canvas)
 // Primitives use arrays of data, called buffers, which define the positions of the vertices to be drawn.
 function createTriangle(gl) 
 {
+    // Usamos el contexto para crear un buffer
     let vertexBuffer;
     vertexBuffer = gl.createBuffer();
     
     gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
 
+    // Web GL funciona con arreglos unidimensionales 
     let verts = [
         0.0,  0.5, 0.0,
         -.5, -.5,  0.0,
@@ -97,9 +105,11 @@ function createTriangle(gl)
     // target = gl.ARRAY_BUFFER: Buffer containing vertex attributes, such as vertex coordinates, texture coordinate data, or vertex color data.
     // srcData = This is a new data type introduced into web browsers for use with WebGL. Float32Array is a type of ArrayBuffer, also known as a typed array. This is a JavaScript type that stores compact binary data. 
     // usage = A GLenum specifying the usage pattern of the data store. gl.STATIC_DRAW: Contents of the buffer are likely to be used often and not change often. Contents are written to the buffer, but not read.
+    // Guardamos el arreglo en el Buffer que hicimos
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verts), gl.STATIC_DRAW);
 
     // The resulting object contains the vertexbuffer, the size of the vertex structure (3 floats, x, y, z), the number of vertices to be drawn, the the primitive to draw.
+    // vertSize: Define cada cuantos elementos estamos definiendo una artista
     let triangle = {buffer:vertexBuffer, vertSize: 3, nVerts: 3, primtype:gl.TRIANGLE_STRIP};
     
     return triangle;
@@ -217,5 +227,4 @@ function draw(gl, obj)
 
     // draw the object
     gl.drawArrays(obj.primtype, 0, obj.nVerts);
-}
-        
+}   
