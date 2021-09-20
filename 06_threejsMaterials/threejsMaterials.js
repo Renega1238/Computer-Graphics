@@ -1,34 +1,14 @@
-let renderer = null, 
-scene = null, 
-camera = null,
-root = null,
-group = null,
-sphere = null,
-sphereTextured = null;
+import * as THREE from "../libs/three.js/r131/three.module.js"
+import {initControls, addMouseHandler} from "./sceneHandlers.js";
 
-let materialName = "phong-textured";	
-let textureOn = true;
+let renderer = null, scene = null, camera = null, root = null, group = null, sphere = null, sphereTextured = null;
 
-let duration = 10000; // ms
+let materialName = "phong-textured";
+
+const  duration = 10000; // ms
 let currentTime = Date.now();
 
-let materials = {};
-let mapUrl = "../images/moon_1024.jpg";
-let textureMap = null;
-
-function main()
-{
-    let canvas = document.getElementById("webglcanvas");
-
-    // create the scene
-    createScene(canvas);
-
-    // initialize the controls
-    initControls();
-    
-    // Run the run loop
-    run();
-}
+let materials = {}, mapUrl = "../images/moon_1024.jpg", textureMap = null;
 
 function animate() 
 {
@@ -42,9 +22,9 @@ function animate()
     group.rotation.y += angle;
 }
 
-function run()
+function update()
 {
-    requestAnimationFrame( () => run());
+    requestAnimationFrame( () => update());
     
     // Render the scene
     renderer.render( scene, camera );
@@ -92,7 +72,9 @@ function setMaterialSpecular(color)
 
 function setMaterial(name)
 {
+    const textureOn = document.querySelector("#textureCheckbox").checked;
     materialName = name;
+
     if (textureOn)
     {
         sphere.visible = false;
@@ -105,30 +87,6 @@ function setMaterial(name)
         sphereTextured.visible = false;
         sphere.material = materials[name];
     }
-}
-
-function toggleTexture()
-{
-    textureOn = !textureOn;
-    let names = materialName.split("-");
-    if (!textureOn)
-    {
-        setMaterial(names[0]);
-    }
-    else
-    {
-        setMaterial(names[0] + "-textured");
-    }
-}
-
-function toggleWireframe()
-{
-    materials["basic"].wireframe = !materials["basic"].wireframe;
-    materials["phong"].wireframe = !materials["phong"].wireframe;
-    materials["lambert"].wireframe = !materials["lambert"].wireframe;
-    materials["basic-textured"].wireframe = !materials["basic-textured"].wireframe;
-    materials["phong-textured"].wireframe = !materials["phong-textured"].wireframe;
-    materials["lambert-textured"].wireframe = !materials["lambert-textured"].wireframe;
 }
 
 function createScene(canvas) 
@@ -170,7 +128,7 @@ function createScene(canvas)
     createMaterials();
     
     // Create the sphere geometry
-    geometry = new THREE.SphereGeometry(2, 20, 20);
+    let geometry = new THREE.SphereGeometry(2, 20, 20);
     
     // And put the geometry and material together into a mesh
     sphere = new THREE.Mesh(geometry, materials["phong"]);
@@ -193,5 +151,20 @@ function createScene(canvas)
 
     // add mouse handling so we can rotate the scene
     addMouseHandler(canvas, root);
-}
+}    
+
+function main()
+{
+    let canvas = document.getElementById("webglcanvas");
+
+    // create the scene
+    createScene(canvas);
+
+    // initialize the controls
+    initControls(materials, setMaterial);
     
+    // update the update loop
+    update();
+}
+
+main();

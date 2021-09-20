@@ -1,32 +1,24 @@
-let renderer = null, 
-scene = null, 
-camera = null,
-cube = null,
-sphere = null,
-cone = null,
-sphereGroup = null;
+import * as THREE from "../libs/three.js/r131/three.module.js"
 
-let duration = 5000; // ms
+let renderer = null, scene = null, camera = null, cube = null, sphere = null, cone = null, sphereGroup = null;
+
+const duration = 5000; // ms
 let currentTime = Date.now();
 
-function main() {
-                    
+function main() 
+{
     const canvas = document.getElementById("webglcanvas");
-
-    // create the scene
     createScene(canvas);
-    
-    // Run the run loop
-    run();
+    update();
 }
 
 function animate() 
 {
-    let now = Date.now();
-    let deltat = now - currentTime;
+    const now = Date.now();
+    const deltat = now - currentTime;
     currentTime = now;
-    let fract = deltat / duration;
-    let angle = Math.PI * 2 * fract;
+    const fract = deltat / duration;
+    const angle = Math.PI * 2 * fract;
 
     // Rotate the cube about its Y axis
     cube.rotation.y += angle;
@@ -39,8 +31,9 @@ function animate()
     cone.rotation.z += angle;
 }
 
-function run() {
-    requestAnimationFrame(function() { run(); });
+function update()
+{
+    requestAnimationFrame(function() { update(); });
     
     // Render the scene
     renderer.render( scene, camera );
@@ -69,10 +62,10 @@ function createScene(canvas)
     scene.add(camera);
 
     // Create a group to hold all the objects
-    let cubeGroup = new THREE.Object3D;
+    const cubeGroup = new THREE.Object3D;
     
     // Add a directional light to show off the objects
-    let light = new THREE.DirectionalLight( 0xffffff, 1.0);
+    const light = new THREE.DirectionalLight( 0xffffff, 1.0);
 
     // Position the light out from the scene, pointing at the origin
     light.position.set(-.5, .2, 1);
@@ -81,12 +74,12 @@ function createScene(canvas)
 
     // This light globally illuminates all objects in the scene equally.
     // Cannot cast shadows
-    let ambientLight = new THREE.AmbientLight(0xffccaa, 0.2);
+    const ambientLight = new THREE.AmbientLight(0xffccaa, 0.2);
     scene.add(ambientLight);
 
-    let textureUrl = "../images/ash_uvgrid01.jpg";
-    let texture = new THREE.TextureLoader().load(textureUrl);
-    let material = new THREE.MeshPhongMaterial({ map: texture });
+    const textureUrl = "../images/ash_uvgrid01.jpg";
+    const texture = new THREE.TextureLoader().load(textureUrl);
+    const material = new THREE.MeshPhongMaterial({ map: texture });
 
     // Create the cube geometry
     let geometry = new THREE.BoxGeometry(2, 2, 2);
@@ -102,8 +95,6 @@ function createScene(canvas)
     cubeGroup.add( cube );
 
     cubeGroup.position.set(1, 0, -0.5);
-
-    console.log("cube position:" , cube);
 
     // Create a group for the sphere
     sphereGroup = new THREE.Object3D;
@@ -140,13 +131,15 @@ function createScene(canvas)
     addMouseHandler(canvas, cubeGroup);
 
     // This code gets the world position of the cone.
-    let coneWorldPosition = new THREE.Vector3();
+    const coneWorldPosition = new THREE.Vector3();
 
     cubeGroup.updateMatrixWorld();
     sphereGroup.updateMatrixWorld();
     cone.updateMatrixWorld();
 
-    console.log(cone.position);
+    console.log("Cone position:", cone.position);
     cone.getWorldPosition(coneWorldPosition);
-    console.log(coneWorldPosition);
+    console.log("Cone world position", coneWorldPosition);
 }
+
+main();

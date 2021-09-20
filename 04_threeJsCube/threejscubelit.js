@@ -1,8 +1,6 @@
+import * as THREE from "../libs/three.js/r131/three.module.js"
 
-let renderer = null, 
-scene = null, 
-camera = null,
-cube = null;
+let renderer = null, scene = null, camera = null, cube = null;
 
 let duration = 5000; // ms
 let currentTime = Date.now();
@@ -11,7 +9,7 @@ function main()
 {
     scene_setup();
     create_cube();
-    run();
+    update();
 }
 
 function animate() 
@@ -27,9 +25,9 @@ function animate()
     }
 }
 
-function run() 
+function update() 
 {
-    requestAnimationFrame(function() { run(); });
+    requestAnimationFrame(function() { update(); });
     
     // Render the scene
     renderer.render( scene, camera );
@@ -96,3 +94,5 @@ function create_cube()
     // Finally, add the mesh to our scene
     scene.add( cube );
 }
+
+main();
