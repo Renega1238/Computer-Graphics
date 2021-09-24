@@ -1,6 +1,8 @@
 // Three js documentation
 // https://threejs.org/docs/index.html#manual/introduction/Creating-a-scene
 
+import * as THREE from "../libs/three.js/r131/three.module.js"
+
 let renderer = null,    // Object in charge of drawing a scene
 scene = null,           // Top-level object in the Three.js graphics hierarchy. Three js contains all
                         // graphical objects in a parent-child hierarchy
@@ -8,18 +10,18 @@ camera = null,
 cube = null,
 cube2 = null;
 
-let duration = 10000; // ms
+const duration = 10000; // ms
 let currentTime = Date.now();
 
 function main() 
 {
     scene_setup();
     create_cube();
-    // Run the run loop
-    run();
+    update();
 }
 
-function animate() {		
+function animate() 
+{		
     let now = Date.now();
     let deltat = now - currentTime;
     currentTime = now;
@@ -33,8 +35,9 @@ function animate() {
     cube2.rotation.x -= angle;
 }
 
-function run() {
-    requestAnimationFrame(() => run() );
+function update()
+{
+    requestAnimationFrame(() => update() );
     
     // Render the scene
     renderer.render( scene, camera );
@@ -61,7 +64,7 @@ function scene_setup()
 
     // Add  a camera so we can view the scene. Three js uses these values to create a projection matrix.
     camera = new THREE.PerspectiveCamera( 45, canvas.width / canvas.height, 1, 40 );
-
+    // camera = new THREE.OrthographicCamera(-5, 5, 4, -4, 1, 40);
     scene.add(camera);
 }
 
@@ -120,3 +123,5 @@ function create_cube()
     
     scene.add( cube2 );
 }
+
+main();

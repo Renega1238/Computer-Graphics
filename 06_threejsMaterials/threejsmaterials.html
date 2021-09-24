@@ -3,17 +3,12 @@
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 		<title>Three.js Materials</title>
 
-		<link rel="stylesheet" href="../libs/jquery-ui/jquery-ui.css" />
-		<link rel="stylesheet" href="../libs/colorpicker/css/colorpicker.css" />
 		<link rel="stylesheet" href="../css/main.css" />
 		<link rel="stylesheet" href="../css/threejsmaterials.css" />
 		
-		<script src="../libs/three.js/three.js"></script>
-
-		<script src="threejsMaterials.js"></script>
-		<script src="sceneHandlers.js"></script>
+		<script type="module" defer src="threejsMaterials.js"></script>
 	</head>
-	<body onload="main()">
+	<body>
 
 		<div id="container">
 			<canvas id="webglcanvas" width=800 height=600></canvas>
@@ -35,9 +30,9 @@
 		<div id="properties"> Use these controls to change properties
 			<div id="materialPicker"> Material
 				<div id="materialRBGroup">
-					<input type="radio" name="materialRBGroup" value="basic" onclick="changeMaterial(this);"> Basic (Unlit)<br>
-					<input type="radio" name="materialRBGroup" value="phong" checked onclick="changeMaterial(this);"> Phong<br>
-					<input type="radio" name="materialRBGroup" value="lambert" onclick="changeMaterial(this);"> Lambert
+					<input type="radio" name="materialRBGroup" value="basic"> Basic (Unlit)<br>
+					<input type="radio" name="materialRBGroup" value="phong" checked> Phong<br>
+					<input type="radio" name="materialRBGroup" value="lambert"> Lambert
 				</div>
 
 				<div id="materialWireframe">
