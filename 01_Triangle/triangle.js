@@ -30,7 +30,7 @@ const fragmentShaderSource = `#version 300 es
 
         void main(void) {
         // Return the pixel color: always output white
-        fragColor = vec4(1.0, 1.0, 1.0, 1.0);
+        fragColor = vec4(1, 2.0, 0, 1.5);
     }`;
 
 function main() 
@@ -94,6 +94,7 @@ function initMatrices(canvas)
     // out	mat4	the receiving matrix
     // a	mat4	the matrix to translate
     // v	vec3	vector to translate by
+    // el -3 es la posición respecto al near y al far
     mat4.translate(modelViewMatrix, modelViewMatrix, [0, 0, -3]);
 
     // Create a project matrix with 45 degree field of view
@@ -123,9 +124,13 @@ function createTriangle(gl)
 
     // Web GL funciona con arreglos unidimensionales 
     let verts = [
-        0.0,  0.5, 0.0,
+        -0.5,  0.5, 0.0,
+        
         -.5, -.5,  0.0,
+        
         .5, -.5, 0.0,
+        
+        
     ];
 
     // void gl.bufferData(target, ArrayBufferView srcData, usage, srcOffset, length);
@@ -137,7 +142,8 @@ function createTriangle(gl)
 
     // The resulting object contains the vertexbuffer, the size of the vertex structure (3 floats, x, y, z), the number of vertices to be drawn, the the primitive to draw.
     // vertSize: Define cada cuantos elementos estamos definiendo una artista
-    let triangle = {buffer:vertexBuffer, vertSize: 3, nVerts: 3, primtype:gl.TRIANGLE_STRIP};
+    // vertSize, cada 3 elementos se hace un vertice, nVerts numero de vertices
+    let triangle = {buffer:vertexBuffer, vertSize: 3, nVerts: 4, primtype:gl.TRIANGLE_STRIP};
     
     return triangle;
 }

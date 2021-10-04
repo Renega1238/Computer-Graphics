@@ -23,7 +23,7 @@ const vertexShaderSource = `#version 300 es
         void main(void) {
     		// Return the transformed and projected vertex value
             gl_Position = projectionMatrix * modelViewMatrix * vec4(vertexPos, 1.0);
-            color = vertexColor * 0.8;
+            color = vertexColor * 0.9;
         }`;
 
 const fragmentShaderSource = `#version 300 es
@@ -43,7 +43,8 @@ function main()
     initViewport(gl, canvas);
     initGL(canvas);
     
-    let cube = createCube(gl, [2 , 0, -2], [0, 0, 1]);
+                            // Traslado   // Eje sobre el cual gira 
+    let cube = createCube(gl, [2 , 0, -2], [3, -7, -3]);
     let cube2 = createCube(gl, [-2, 0, -2], [-1, 1, 0]);
     
     const shaderProgram = shaderUtils.initShader(gl, vertexShaderSource, fragmentShaderSource);
@@ -80,6 +81,7 @@ function initGL(canvas)
     // Create a project matrix with 45 degree field of view
     projectionMatrix = mat4.create();
     
+    // Para que se vea bien en 3D, debe de ser de perspectiva 
     mat4.perspective(projectionMatrix, Math.PI / 4, canvas.width / canvas.height, 1, 100);
     // mat4.orthoNO(projectionMatrix, -4, 4, -3.5, 3.5, 1, 100)
     mat4.translate(projectionMatrix, projectionMatrix, [0, 0, -5]);
@@ -158,12 +160,16 @@ function createCube(gl, translation, rotationAxis)
             vertexColors.push(...color);
     });
 
+    // El static_draw significa que la info del buffer no va a cambiar a lo largo de la ejecucion
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexColors), gl.STATIC_DRAW);
 
     // Index data (defines the triangles to be drawn).
     let cubeIndexBuffer = gl.createBuffer();
+    // Element array buffer sirve para definir el orden de los elementos (primitivas)
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeIndexBuffer);
 
+    // Son triangulo, entonces cada 3 es un triangulo
+    // Son las posiciones de mi arreglo de indices
     let cubeIndices = [
         0, 1, 2,      0, 2, 3,    // Front face
         4, 5, 6,      4, 6, 7,    // Back face
@@ -178,9 +184,22 @@ function createCube(gl, translation, rotationAxis)
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(cubeIndices), gl.STATIC_DRAW);
     
     let cube = {
-            buffer: vertexBuffer, colorBuffer:colorBuffer, indices:cubeIndexBuffer,
-            vertSize:3, nVerts:24, colorSize:4, nColors: 24, nIndices:36,
-            primtype:gl.TRIANGLES, modelViewMatrix: mat4.create(), currentTime : Date.now()
+            buffer: vertexBuffer, 
+            colorBuffer:colorBuffer, 
+            indices:cubeIndexBuffer,
+
+            vertSize:3, 
+            nVerts:24, 
+
+            colorSize:4, 
+            nColors: 24, 
+
+            nIndices:36,
+
+            primtype:gl.TRIANGLES, 
+            modelViewMatrix: mat4.create(),  // Cada objeto tiene su matriz de transformacion 
+            currentTime : Date.now()
+
         };
 
     mat4.translate(cube.modelViewMatrix, cube.modelViewMatrix, translation);
@@ -190,8 +209,9 @@ function createCube(gl, translation, rotationAxis)
         let now = Date.now();
         let deltat = now - this.currentTime;
         this.currentTime = now;
-        let fract = deltat / duration;
-        let angle = Math.PI * 2 * fract;
+
+        let fract = deltat / duration; // Que tanto se mueve el cubo segun el periodo que pusiste
+        let angle =  -Math.PI * 2 * fract;
     
         // Rotates a mat4 by the given angle
         // mat4 out the receiving matrix
@@ -238,11 +258,10 @@ function draw(gl, shaderProgram, objs)
         gl.bindBuffer(gl.ARRAY_BUFFER, obj.colorBuffer);
         gl.vertexAttribPointer(shaderVertexColorAttribute, obj.colorSize, gl.FLOAT, false, 0, 0);
         
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.indices);
-
         gl.uniformMatrix4fv(shaderProjectionMatrixUniform, false, projectionMatrix);
         gl.uniformMatrix4fv(shaderModelViewMatrixUniform, false, obj.modelViewMatrix);
 
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.indices);
         // Draw the object's primitives using indexed buffer information.
         // void gl.drawElements(mode, count, type, offset);
         // mode: A GLenum specifying the type primitive to render.

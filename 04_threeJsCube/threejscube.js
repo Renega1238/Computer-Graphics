@@ -63,9 +63,10 @@ function scene_setup()
     scene.background = new THREE.Color("rgb(50,50,50)");
 
     // Add  a camera so we can view the scene. Three js uses these values to create a projection matrix.
-    camera = new THREE.PerspectiveCamera( 45, canvas.width / canvas.height, 1, 40 );
-    // camera = new THREE.OrthographicCamera(-5, 5, 4, -4, 1, 40);
+    //camera = new THREE.PerspectiveCamera( 45, canvas.width / canvas.height, 1, 40 );
+    camera = new THREE.OrthographicCamera(-5, 5, 4, -4, 1, 40);
     scene.add(camera);
+
 }
 
 function create_cube()
@@ -105,7 +106,7 @@ function create_cube()
         const blue = Math.random();
 
         for (let j = 0; j< 4; j++)
-        {
+        { 
             colors.push(red, green, blue);
         }
     }
